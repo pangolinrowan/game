@@ -3,7 +3,7 @@ import pygame
 import os
 import json
 import tempfile
-from scripts.tilemap import Tilemap, PHYSICS_TILES, AUTOTILE_MAP
+from scripts.tilemap import Tilemap
 
 class TestTilemap:
     # Initialize pygame for testing and clean up afterward
