@@ -29,7 +29,6 @@ class TestSpark:
         assert spark.pos == list(pos)
         assert spark.angle == angle
         assert math.isclose(spark.speed, speed, rel_tol=1e-09, abs_tol=1e-09)
-        #assert spark.speed == speed
         assert spark.color == color
     
     # Verify Spark update method correctly updates position and speed
@@ -45,17 +44,18 @@ class TestSpark:
         assert spark.pos[1] == 100      
         
         # Speed should decrease
-        assert spark.speed == 1.9  # 2 - 0.1
-        
+        #assert spark.speed == 1.9  # 2 - 0.1
+        assert math.isclose(spark.speed, 1.9, rel_tol=1e-09, abs_tol=1e-09)
+
         # Shouldn't be killed yet
         assert not kill
         
         # Create a spark with different angle
         spark = Spark((100, 100), math.pi/2, 2, (255, 255, 255))  # 90 degrees (down)
-        
+    
         # Update once
-        kill = spark.update()
-        
+        spark.update()
+
         # Check position update: cos(pi/2) = 0, sin(pi/2) = 1
         assert abs(spark.pos[0] - 100) < 0.0001  # x += cos(pi/2) * 2 (approximately 0)
         assert abs(spark.pos[1] - 102) < 0.0001  # y += sin(pi/2) * 2 (approximately 2)
@@ -65,7 +65,7 @@ class TestSpark:
         
         # First update, speed becomes 0.1
         kill = spark.update()
-        assert spark.speed == 0.1
+        assert math.isclose(spark.speed, 0.1, rel_tol=1e-09, abs_tol=1e-09)
         assert not kill
         
         # Second update, speed becomes 0
