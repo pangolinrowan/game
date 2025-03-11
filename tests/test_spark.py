@@ -28,7 +28,8 @@ class TestSpark:
         
         assert spark.pos == list(pos)
         assert spark.angle == angle
-        assert spark.speed == speed
+        assert math.isclose(spark.speed, speed, rel_tol=1e-09, abs_tol=1e-09)
+        #assert spark.speed == speed
         assert spark.color == color
     
     # Verify Spark update method correctly updates position and speed
@@ -40,8 +41,8 @@ class TestSpark:
         kill = spark.update()
         
         # Check position update: cos(0) = 1, sin(0) = 0
-        assert spark.pos[0] == 100 + 2  # x += cos(0) * 2
-        assert spark.pos[1] == 100      # y += sin(0) * 0
+        assert spark.pos[0] == 100 + 2  
+        assert spark.pos[1] == 100      
         
         # Speed should decrease
         assert spark.speed == 1.9  # 2 - 0.1
