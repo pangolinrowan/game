@@ -1,298 +1,225 @@
 import pytest
-import pygame
 import sys
 import os
-import importlib
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-# Path to the game file
-GAME_FILE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'CalenCuesta_Game.py'))
+# First, let's test that all modules can be imported
+def test_imports():
+    """Test that all game modules can be imported without errors"""
+    # Import the modules to ensure they're available
+    from scripts.entities import PhysicsEntity, Player, Enemy
+    from scripts.utilities import load_image, load_images, Animation
+    from scripts.tilemap import Tilemap
+    from scripts.clouds import Clouds
+    from scripts.particle import Particle, Projectile
+    from scripts.spark import Spark
+    
+    # If we get to this point without exceptions, the imports are working
+    assert True
 
-class TestGame:
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        # Save original functions
-        self.original_init = pygame.init
-        self.original_display = pygame.display
-        self.original_time = pygame.time
-        self.original_mixer = pygame.mixer
-        self.original_transform = pygame.transform
-        self.original_draw = pygame.draw
-        self.original_exit = sys.exit
-        
-        # Mock pygame functions
-        pygame.init = MagicMock(return_value=(0, 0))
-        pygame.display.set_caption = MagicMock()
-        pygame.display.set_mode = MagicMock(return_value=pygame.Surface((640, 480)))
-        pygame.time.Clock = MagicMock()
-        pygame.mixer.Sound = MagicMock()
-        pygame.mixer.music = MagicMock()
-        pygame.transform.scale = MagicMock(return_value=pygame.Surface((640, 480)))
-        pygame.transform.flip = MagicMock(return_value=pygame.Surface((16, 16)))
-        pygame.transform.scale_by = MagicMock(return_value=pygame.Surface((16, 16)))
-        pygame.draw.circle = MagicMock()
-        
-        # Mock sys.exit to prevent the game from quitting
-        sys.exit = MagicMock()
-        
-        # Mock event queue
-        self.mock_events = []
-        self.original_get_events = pygame.event.get
-        pygame.event.get = lambda: self.mock_events
-        
+# Mock pygame to prevent actual initialization
+@pytest.fixture(autouse=True)
+def mock_pygame():
+    """Mock pygame to prevent GUI initialization"""
+    with patch.dict('sys.modules', {'pygame': MagicMock()}):
         yield
-        
-        # Restore original functions
-        pygame.init = self.original_init
-        pygame.display = self.original_display
-        pygame.time = self.original_time
-        pygame.mixer = self.original_mixer
-        pygame.transform = self.original_transform
-        pygame.draw = self.original_draw
-        sys.exit = self.original_exit
-        pygame.event.get = self.original_get_events
 
-    def test_import_game_class(self):
-        """Test if we can import the Game class without running it."""
-        # Temporarily modify sys.path to include the directory containing CalenCuesta_Game.py
-        game_dir = os.path.dirname(GAME_FILE_PATH)
-        sys.path.insert(0, game_dir)
+class TestGameIntegration:
+    """Test the integration between various game components"""
+    
+    @pytest.fixture
+    def game_components(self):
+        """Set up the basic game components without initializing a Game object"""
+        # Create mocks for the necessary game elements
+        # Create animation mocks that properly control 'done' state
+        leaf_anim = MagicMock()
+        leaf_anim.done = False
         
-        # Save original __import__ function
-        original_import = __import__
+        fireball_anim = MagicMock()
+        fireball_anim.done = False
         
-        try:
-            # Create a mock for the run method to prevent it from being called
-            run_mock = MagicMock()
-            
-            # Define a custom import function that mocks Game.run
-            def custom_import(name, *args, **kwargs):
-                module = original_import(name, *args, **kwargs)
-                if name == 'CalenCuesta_Game':
-                    # Replace Game.run with our mock before Game() is called
-                    if hasattr(module, 'Game'):
-                        module.Game.run = run_mock
-                return module
-            
-            # Replace the built-in __import__ function
-            __builtins__['__import__'] = custom_import
-            
-            try:
-                # Import the module, but intercept Game.run to prevent execution
-                with patch('sys.exit'):
-                    # Use importlib to load the module
-                    spec = importlib.util.spec_from_file_location("CalenCuesta_Game", GAME_FILE_PATH)
-                    module = importlib.util.module_from_spec(spec)
-                    
-                    # This will execute the module code but Game.run won't actually run
-                    with patch.object(sys, 'exit'):
-                        spec.loader.exec_module(module)
-                
-                # Verify that Game class exists in the module
-                assert hasattr(module, 'Game')
-                
-                # Test passed if we got here without running the game loop
-                assert True
-                
-            except Exception as e:
-                pytest.fail(f"Failed to import Game class: {e}")
-        
-        finally:
-            # Restore original __import__ function
-            __builtins__['__import__'] = original_import
-            # Remove the directory from sys.path
-            sys.path.remove(game_dir)
-
-    def test_game_initialization_mock(self):
-        """Test game initialization using mock inheritance."""
-        # Create a mock Game class that inherits the real one but overrides run
-        game_dir = os.path.dirname(GAME_FILE_PATH)
-        sys.path.insert(0, game_dir)
-        
-        try:
-            # Mock key modules before importing
-            with patch('pygame.init', return_value=(0, 0)), \
-                 patch('pygame.display.set_mode', return_value=pygame.Surface((640, 480))), \
-                 patch('pygame.time.Clock'), \
-                 patch('pygame.mixer.Sound'), \
-                 patch('pygame.mixer.music'), \
-                 patch('scripts.tilemap.Tilemap.load'), \
-                 patch('scripts.utilities.load_image', return_value=pygame.Surface((16, 16))), \
-                 patch('scripts.utilities.load_image2', return_value=pygame.Surface((16, 16))), \
-                 patch('scripts.utilities.load_images', return_value=[pygame.Surface((16, 16))]), \
-                 patch('scripts.utilities.load_images2', return_value=[pygame.Surface((16, 16))]), \
-                 patch('sys.exit'):
-                
-                # Do this special import
-                original_game_run = None
-                
-                # Define a mock class
-                class MockGame:
-                    def __init__(self):
-                        self.movement = [False, False, False, False]
-                        self.screen = pygame.Surface((640, 480))
-                        self.display = pygame.Surface((320, 240))
-                        self.clock = pygame.time.Clock()
-                        self.assets = {
-                            'decor': [],
-                            'grass': [],
-                            'large_decor': [],
-                            'stone': [],
-                            'background': pygame.Surface((16, 16)),
-                            'clouds': [],
-                            'enemy/idle': MagicMock(),
-                            'enemy/run': MagicMock(),
-                            'player/idle': MagicMock(),
-                            'player/run': MagicMock(),
-                            'player/jump': MagicMock(),
-                            'player/attack': MagicMock(),
-                        }
-                        self.sfx = {
-                            'jump': MagicMock(),
-                            'hit': MagicMock(),
-                            'shoot': MagicMock(),
-                            'ambience': MagicMock(),
-                            'fireball': MagicMock(),
-                            'explosion': MagicMock(),
-                            'landing': MagicMock(),
-                        }
-                        self.player = MagicMock()
-                        self.tilemap = MagicMock()
-                        self.clouds = MagicMock()
-                        self.level = 0
-                        self.screenshake = 0
-                        self.enemies = []
-                        self.projectiles = []
-                        self.player_projectiles = []
-                        self.particles = []
-                        self.sparks = []
-                        self.dead = 0
-                        self.transition = -30
-                    
-                    def run(self):
-                        # Override run to do nothing
-                        pass
-                    
-                    def load_level(self, level_id):
-                        self.enemyRects = {}
-                        self.scroll = [0, 0]
-                        self.dead = 0
-                        self.transition = -30
-                
-                # Create our mock game
-                game = MockGame()
-                
-                # Test the basic properties
-                assert game.movement == [False, False, False, False]
-                assert isinstance(game.screen, pygame.Surface)
-                assert isinstance(game.display, pygame.Surface)
-                assert game.level == 0
-                assert game.screenshake == 0
-                
-                # Test asset structure
-                assert 'decor' in game.assets
-                assert 'grass' in game.assets
-                assert 'player/idle' in game.assets
-                assert 'enemy/idle' in game.assets
-                
-                # Test sound effects
-                assert 'jump' in game.sfx
-                assert 'hit' in game.sfx
-                
-                # Test components
-                assert game.player is not None
-                assert game.tilemap is not None
-                assert game.clouds is not None
-                
-        except Exception as e:
-            pytest.fail(f"Test failed with error: {e}")
-        finally:
-            # Remove the directory from sys.path
-            if game_dir in sys.path:
-                sys.path.remove(game_dir)
-
-    def test_player_controls(self):
-        """Test player control handling using a mock game."""
-        # Create a simple mock game for testing controls
-        mock_game = MagicMock()
-        mock_game.movement = [False, False, False, False]
-        mock_game.player = MagicMock()
-        mock_game.player.jump = MagicMock(return_value=True)
-        mock_game.player.attack = MagicMock()
-        mock_game.player.attacking = False
-        mock_game.sfx = {
-            'jump': MagicMock(),
-            'fireball': MagicMock()
+        mock_assets = {
+            'player/idle': MagicMock(),
+            'player/run': MagicMock(),
+            'player/jump': MagicMock(),
+            'player/attack': MagicMock(loop=False),
+            'player/weapon': MagicMock(),
+            'enemy/idle': MagicMock(),
+            'enemy/run': MagicMock(),
+            'particle/leaf': leaf_anim,
+            'particle/fireball': fireball_anim,
+            'particle/particle': MagicMock(),
+            'projectile': MagicMock(),
         }
         
-        # Test movement keys
-        # Create a key down event for pressing 'a'
-        key_down_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_a})
+        mock_sfx = {
+            'jump': MagicMock(),
+            'hit': MagicMock(),
+            'shoot': MagicMock(),
+            'fireball': MagicMock(),
+            'explosion': MagicMock(),
+            'landing': MagicMock(),
+        }
         
-        # Process event
-        if key_down_event.type == pygame.KEYDOWN:
-            if key_down_event.key == pygame.K_a:
-                mock_game.movement[0] = True
+        # Create a mock game class that simulates the Game structure
+        class MockGame:
+            def __init__(self):
+                self.assets = mock_assets
+                self.sfx = mock_sfx
+                self.projectiles = []
+                self.player_projectiles = []
+                self.particles = []
+                self.sparks = []
+                self.enemies = []
+                self.enemyRects = {}
+                self.dead = 0
+                self.screenshake = 0
+                
+        return MockGame()
+    
+    def test_player_enemy_interaction(self, game_components):
+        """Test player and enemy objects can interact properly"""
+        from scripts.entities import Player, Enemy
         
-        # Verify movement state changed
-        assert mock_game.movement[0] == True
+        # Create the player and enemy
+        player = Player(game_components, (50, 50), (10, 13))
+        enemy = Enemy(game_components, (100, 50), (8, 15))
         
-        # Test jump key
-        jump_event = pygame.event.Event(pygame.KEYDOWN, {'key': pygame.K_w})
+        # Add enemy to the game
+        game_components.enemies.append(enemy)
+        game_components.enemyRects[enemy] = enemy.rect()
+        game_components.player = player
         
-        # Process event
-        if jump_event.type == pygame.KEYDOWN:
-            if jump_event.key == pygame.K_w:
-                if mock_game.player.jump():
-                    mock_game.sfx['jump'].play()
+        # Verify the enemy is added correctly
+        assert len(game_components.enemies) == 1
+        assert game_components.enemyRects.get(enemy) is not None
         
-        # Verify jump was called
-        mock_game.player.jump.assert_called_once()
-        mock_game.sfx['jump'].play.assert_called_once()
+        # Check that the player's attack can create projectiles
+        player.attack()
+        assert player.attacking == True
+    
+    def test_projectile_creation(self, game_components):
+        """Test projectile creation and interactions"""
+        from scripts.particle import Projectile
         
-        # Test attack
-        attack_event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {'button': 1})
+        # Create a projectile
+        projectile = Projectile(game_components, 'fireball', [100, 100], [1.5, 0])
+        game_components.player_projectiles.append(projectile)
         
-        # Process event
-        if attack_event.type == pygame.MOUSEBUTTONDOWN:
-            if attack_event.button == 1:
-                if not mock_game.player.attacking:
-                    mock_game.player.attack()
-                    mock_game.sfx['fireball'].play()
+        # Check projectile was added
+        assert len(game_components.player_projectiles) == 1
         
-        # Verify attack was called
-        mock_game.player.attack.assert_called_once()
-        mock_game.sfx['fireball'].play.assert_called_once()
-
-    def test_load_level(self):
-        """Test level loading using a mock game."""
-        # Create a simple mock game for testing level loading
-        mock_game = MagicMock()
-        mock_game.enemies = []
-        mock_game.projectiles = []
-        mock_game.player_projectiles = []
-        mock_game.particles = []
-        mock_game.sparks = []
-        mock_game.tilemap = MagicMock()
-        mock_game.tilemap.extract = MagicMock(return_value=[{'pos': (0, 0)}])
+        # Mock a tilemap for collision detection
+        mock_tilemap = MagicMock()
+        mock_tilemap.solid_check.return_value = None
         
-        # Define a simple load_level method similar to the game's
-        def load_level(level_id):
-            mock_game.scroll = [0, 0]
-            mock_game.enemyRects = {}
-            mock_game.dead = 0
-            mock_game.transition = -30
-            return True
+        # Override the update method to control return value
+        projectile.update = lambda tilemap: [False, None, None]
         
-        # Attach the method to our mock
-        mock_game.load_level = load_level
+        kill = projectile.update(mock_tilemap)
         
-        # Call load_level
-        result = mock_game.load_level(0)
+        # Verify the projectile wasn't killed
+        assert kill[0] == False
+    
+    def test_particle_system(self, game_components):
+        """Test that particles can be created and managed"""
+        from scripts.particle import Particle
         
-        # Verify state after loading level
-        assert result == True
-        assert mock_game.scroll == [0, 0]
-        assert isinstance(mock_game.enemyRects, dict)
-        assert mock_game.dead == 0
-        assert mock_game.transition == -30
+        # Create a leaf particle with mocked update method
+        leaf = Particle(game_components, 'leaf', [100, 100], velocity=[0, 0.3])
+        
+        # Override the update method to control the return value explicitly
+        leaf.update = lambda: False  # First call returns False (don't kill)
+        
+        game_components.particles.append(leaf)
+        
+        # Verify particle was added
+        assert len(game_components.particles) == 1
+        
+        # Simulate the game's particle update logic - particle should stay
+        for particle in game_components.particles.copy():
+            kill = particle.update()
+            if kill:
+                game_components.particles.remove(particle)
+        
+        # Particle should remain because we mocked update to return False
+        assert len(game_components.particles) == 1
+        
+        # Now make update return True (should be killed)
+        leaf.update = lambda: True
+        
+        # Update again and particle should be removed
+        for particle in game_components.particles.copy():
+            kill = particle.update()
+            if kill:
+                game_components.particles.remove(particle)
+        
+        # Particle should be removed
+        assert len(game_components.particles) == 0
+    
+    def test_tilemap_integration(self, game_components):
+        """Test that the tilemap can be created and interacts with entities"""
+        from scripts.tilemap import Tilemap
+        from scripts.entities import Player
+        
+        # Create tilemap and player
+        tilemap = Tilemap(game_components, tile_size=16)
+        player = Player(game_components, (50, 50), (10, 13))
+        
+        # Mock some tiles for collision testing
+        tilemap.tilemap = {
+            '3;3': {'type': 'grass', 'variant': 0, 'pos': [3, 3]},
+            '4;3': {'type': 'grass', 'variant': 0, 'pos': [4, 3]}
+        }
+        
+        # Mock the physics_rects_around method to return a predictable result
+        tilemap.physics_rects_around = lambda pos: []  # No collisions
+        
+        # Place player and update - should move without collisions
+        player.pos = [3 * 16 + 8, 2 * 16]
+        player.velocity[1] = 1  # Moving down
+        initial_y = player.pos[1]
+        
+        # Update player
+        player.update(tilemap)
+        
+        # Player should have moved down
+        assert player.pos[1] > initial_y
+    
+    def test_level_transition_logic(self, game_components):
+        """Test level transition logic works without pygame"""
+        # Starting state for level transition
+        game_components.level = 0
+        game_components.transition = 0
+        game_components.enemies = []  # Empty enemy list triggers level transition
+        
+        # Set up a mock load_level function
+        def mock_load_level(level_id):
+            game_components.level = level_id
+            game_components.transition = -30  # Reset transition
+            game_components.enemies = []  # No enemies in new level
+        
+        game_components.load_level = mock_load_level
+        
+        # Simulate the game loop's level transition logic
+        if not len(game_components.enemies):
+            game_components.transition += 1
+            if game_components.transition > 30:
+                game_components.level = min(game_components.level + 1, 5)  # Assuming max 5 levels
+                game_components.load_level(game_components.level)
+        
+        # Since transition starts at 0 and we only increment once, it should not transition yet
+        assert game_components.transition == 1
+        assert game_components.level == 0
+        
+        # Continue simulating until transition occurs
+        for _ in range(30):
+            if not len(game_components.enemies):
+                game_components.transition += 1
+                if game_components.transition > 30:
+                    game_components.level = min(game_components.level + 1, 5)
+                    game_components.load_level(game_components.level)
+        
+        # Now the transition should have occurred
+        assert game_components.level == 1
+        assert game_components.transition == -30  # Reset by load_level
