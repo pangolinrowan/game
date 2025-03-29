@@ -1,3 +1,6 @@
+# TODO: Rework the test to account for FPS and machine differences, use player's position and go to the next step after reaching near a specific point
+# TODO: Mock keybinds instead of intercepting script functions
+import sys
 import importlib
 import time
 import pytest
@@ -60,6 +63,7 @@ def import_class(q):
         except Exception as e:
             q.put(e)
 
+@pytest.mark.skipif(sys.platform != "linux", reason="This test only runs on Linux platforms and certain machines.")
 def test_move(monkeypatch):
     game_instance = None
     start_time = time.time()
