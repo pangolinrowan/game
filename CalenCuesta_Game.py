@@ -78,7 +78,6 @@ class Game:
         self.screenshake = 0
         self.scroll_inc = 30
 
-
     def load_level(self, map_id):
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
         self.leaf_spawners = []
@@ -102,6 +101,7 @@ class Game:
         self.enemyRects = {}
         self.dead = 0
         self.transition = -30
+
     def handle_enemies(self):
         for enemy in self.enemies.copy():
             enemy.update(self.tilemap, movement=(0,0))
@@ -133,6 +133,7 @@ class Game:
                 particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3
             if kill:
                 self.particles.remove(particle)
+    
     def handle_player_projectiles(self):
         for projectile in self.player_projectiles.copy():
             kill = projectile.update(self.tilemap)
@@ -147,6 +148,7 @@ class Game:
                     self.screenshake = max(16, self.screenshake)
                 self.sfx['explosion'].play()
                 self.player_projectiles.remove(projectile)
+    
     def handle_enemy_projectiles(self):
         for projectile in self.projectiles.copy():
             projectile[0][0] += projectile[1]
@@ -199,6 +201,7 @@ class Game:
                     self.movement[0] = False
                 if event.key == pygame.K_d:
                     self.movement[1] = False
+    
     def handle_level_transition(self):
         if not len(self.enemies):
             self.transition += 1
@@ -215,6 +218,12 @@ class Game:
             if self.dead > 40:
                 self.load_level(self.level)
     
+    def handle_leaf_spawners(self):
+        for rect in self.leaf_spawners:
+            if random.random() * 49999 < rect.width * rect.height:
+                pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
+                self.particles.append(Particle(self, 'leaf', pos, velocity=[-0.1, .3], frame=random.randint(0,20)))
+
     def handle_transition(self):
         if self.transition:
             transition_surf = pygame.Surface(self.display.get_size())
@@ -235,10 +244,7 @@ class Game:
             
             handle_scroll(self)
             
-            for rect in self.leaf_spawners:
-                if random.random() * 49999 < rect.width * rect.height:
-                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
-                    self.particles.append(Particle(self, 'leaf', pos, velocity=[-0.1, .3], frame=random.randint(0,20)))
+            handle_leaf_spawners(self)
             
             self.clouds.update()
             self.clouds.render(self.display, offset=render_scroll)
