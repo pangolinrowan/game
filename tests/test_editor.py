@@ -194,12 +194,6 @@ class TestEditor:
         mouse_pos = (100, 100)
         editor.scroll = [0, 0]
         
-        # Calculate tile position as the editor would
-        calculated_tile_pos = (
-            int((mouse_pos[0] + editor.scroll[0]) // editor.tilemap.tile_size),
-            int((mouse_pos[1] + editor.scroll[1]) // editor.tilemap.tile_size)
-        )
-        
         # Override the calculation to target our placed tile
         calculated_tile_pos = tile_pos
         

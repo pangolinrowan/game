@@ -13,9 +13,6 @@ def test_imports():
     from scripts.clouds import Clouds
     from scripts.particle import Particle, Projectile
     from scripts.spark import Spark
-    
-    # If we get to this point without exceptions, the imports are working
-    assert True
 
 # Mock pygame to prevent actual initialization
 @pytest.fixture(autouse=True)

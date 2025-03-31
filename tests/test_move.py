@@ -4,7 +4,6 @@ import threading
 import time
 import pytest
 import pygame
-from scripts.entities import Player
 from scripts.particle import Projectile
 
 def fail_test(string="Test failed"):
