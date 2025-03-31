@@ -140,7 +140,7 @@ class Game:
             kill = projectile.update(self.tilemap)
             projectile.render(self.display, offset=self.render_scroll)
             if kill[0]:
-                for i in range(30):
+                for _ in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
                     self.sparks.append(Spark( ((projectile.rect().right if projectile.velocity[0] > 0 else projectile.rect().left), projectile.rect().center[1]) , angle, speed, (255,119,0)))
@@ -160,7 +160,7 @@ class Game:
             self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - self.render_scroll[0], projectile[0][1] - img.get_height() / 2 - self.render_scroll[1]))
             if self.tilemap.solid_check(projectile[0]):
                 self.projectiles.remove(projectile)
-                for i in range(4):
+                for _ in range(4):
                     self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random(),(255,255,255)))
             elif projectile[2] > 360:
                 self.projectiles.remove(projectile)
@@ -169,7 +169,7 @@ class Game:
                 self.dead += 1
                 self.sfx['hit'].play()
                 self.screenshake = max(16, self.screenshake)
-                for i in range(30):
+                for _ in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
                     self.sparks.append(Spark(self.player.rect().center, angle, speed,(255,255,255)))
@@ -178,30 +178,45 @@ class Game:
     def handle_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    if not self.player.attacking:
-                        self.player.attack()
-                        self.sfx['fireball'].play()
-                        if self.player.flip:                                
-                            self.player_projectiles.append(Projectile(self, 'fireball', [self.player.pos[0] - 16, self.player.pos[1] - 3], [-1.5, 0]))
-                        else:
-                            self.player_projectiles.append(Projectile(self, 'fireball', [self.player.pos[0], self.player.pos[1] - 3], [1.5, 0]))
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    self.movement[0] = True
-                if event.key == pygame.K_d:
-                    self.movement[1] = True
-                if event.key == pygame.K_w:
-                    if self.player.jump():
-                        self.sfx['jump'].play()
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_a:
-                    self.movement[0] = False
-                if event.key == pygame.K_d:
-                    self.movement[1] = False
+                self.handle_quit_event()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.handle_mouse_event(event)
+            elif event.type in (pygame.KEYDOWN, pygame.KEYUP):
+                self.handle_keyboard_event(event)
+
+    def handle_quit_event(self):
+        pygame.quit()
+        sys.exit()
+
+    def handle_mouse_event(self, event):
+        if event.button == 1 and not self.player.attacking:
+            self.player.attack()
+            self.sfx['fireball'].play()
+            direction = -1.5 if self.player.flip else 1.5
+            offset_x = -16 if self.player.flip else 0
+            self.player_projectiles.append(
+                Projectile(self, 'fireball', [self.player.pos[0] + offset_x, self.player.pos[1] - 3], [direction, 0])
+            )
+
+    def handle_keyboard_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            self.handle_keydown(event.key)
+        elif event.type == pygame.KEYUP:
+            self.handle_keyup(event.key)
+
+    def handle_keydown(self, key):
+        if key == pygame.K_a:
+            self.movement[0] = True
+        elif key == pygame.K_d:
+            self.movement[1] = True
+        elif key == pygame.K_w and self.player.jump():
+            self.sfx['jump'].play()
+
+    def handle_keyup(self, key):
+        if key == pygame.K_a:
+            self.movement[0] = False
+        elif key == pygame.K_d:
+            self.movement[1] = False
     
     def handle_level_transition(self):
         if not len(self.enemies):
