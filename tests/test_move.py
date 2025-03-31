@@ -37,6 +37,82 @@ keypress(pygame.K_w, 60 * 0.1)
 keypress(pygame.K_a, 60 * 6)
 
 class TestAction:
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        yield
+        
+        self.__dict__.clear() # Clear the instance variables after each test to avoid interference
+    
+    @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+    def test_death(self, monkeypatch):
+        original_pygame_event_get = pygame.event.get  # Save the original pygame event get function
+        original_projectile_init = Projectile.__init__
+        self.quitgame = False
+        self.game_instance = None
+        
+        def mock_projectile_init(class_self, game, p_type, pos, velocity=[0, 0], frame=0):
+            self.game_instance = game
+            return original_projectile_init(class_self, game, p_type, pos, velocity, frame)
+        
+        def mock_pygame_event_get():
+            queue = original_pygame_event_get()
+            
+            if self.quitgame:
+                queue.append(pygame.event.Event(pygame.QUIT))
+            if not self.game_instance:
+                
+                queue.append(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_d))
+                queue.append(pygame.event.Event(pygame.MOUSEBUTTONDOWN, button=1))
+
+            return queue
+
+        monkeypatch.setattr(Projectile, "__init__", mock_projectile_init)
+        monkeypatch.setattr(pygame.event, "get", mock_pygame_event_get)
+
+        thread = threading.Thread(target=import_class, args=(queue.Queue(),))
+        thread.start()
+
+        while thread.is_alive():
+            if self.game_instance and self.game_instance.dead > 0:
+                break
+
+        self.quitgame = True
+
+        # Wait for the thread to finish
+        thread.join()
+    
+    @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+    def test_game_window(self, monkeypatch):
+        original_pygame_event_get = pygame.event.get  # Save the original pygame event get function
+        quitgame = False
+
+        def mock_pygame_event_get():
+            queue = original_pygame_event_get()
+
+            nonlocal quitgame
+            if quitgame:
+                queue.append(pygame.event.Event(pygame.QUIT))
+
+            return queue
+
+        monkeypatch.setattr(pygame.event, "get", mock_pygame_event_get)
+
+        thread = threading.Thread(target=import_class, args=(queue.Queue(),))
+        thread.start()
+
+        start = time.time()
+        while thread.is_alive():
+            if start and time.time() - start > 1:
+                break
+            time.sleep(0.1)
+
+        assert thread.is_alive() == True and time.time() - start > 1, "Game window should be alive for at least 1 second"
+        
+        quitgame = True
+
+        # Wait for the thread to finish
+        thread.join()
+    
     @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
     def test_move(self, monkeypatch):
         self.setup_mocks(monkeypatch)
