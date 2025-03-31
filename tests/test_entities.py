@@ -1,7 +1,5 @@
 import pytest
 import pygame
-import random
-import math
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utilities import Animation
 from scripts.spark import Spark

@@ -270,14 +270,11 @@ class TestProjectile:
         
         # Mock the transform.flip and transform.scale methods to track calls
         original_flip = pygame.transform.flip
-        original_scale = pygame.transform.scale
         
         def mock_flip(surface, x_flip, y_flip):
             tracker.last_transform_flip = (x_flip, y_flip)
             return original_flip(surface, x_flip, y_flip)
-            
-        def mock_scale(surface, size):
-            return original_scale(surface, size)
+
         
         pygame.transform.flip = mock_flip
         
