@@ -21,7 +21,7 @@ class TestParticle:
                     'particle/particle': Animation([pygame.Surface((16, 16))], img_dur=5, loop=False),
                     'particle/fireball': Animation([pygame.Surface((16, 16))], img_dur=4, loop=True)
                 }
-                self.enemyRects = {}
+                self.enemy_rects = {}
         
         self.game_mock = GameMock()
         
@@ -143,7 +143,7 @@ class TestProjectile:
                 self.assets = {
                     'particle/fireball': Animation([pygame.Surface((16, 16))], img_dur=4, loop=True)
                 }
-                self.enemyRects = {}
+                self.enemy_rects = {}
         
         self.game_mock = GameMock()
         
@@ -211,7 +211,7 @@ class TestProjectile:
         
         # Test collision with enemy
         enemy_rect = pygame.Rect(120, 100, 20, 20)
-        self.game_mock.enemyRects = {'enemy1': enemy_rect}
+        self.game_mock.enemy_rects = {'enemy1': enemy_rect}
         
         # Move projectile to collision position
         projectile.pos = [110, 100]
@@ -223,7 +223,7 @@ class TestProjectile:
         assert kill[2] == 'enemy'  # Should identify collision type
         
         # Test collision with tile
-        self.game_mock.enemyRects = {}  # Clear enemy rects
+        self.game_mock.enemy_rects = {}  # Clear enemy rects
         tile_rect = pygame.Rect(120, 100, 20, 20)
         self.tilemap_mock.collision_rects = [tile_rect]
         

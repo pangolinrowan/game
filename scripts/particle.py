@@ -43,7 +43,7 @@ class Projectile(Particle):
         self.pos[0] += self.velocity[0]
         self.pos[1] += self.velocity[1]
         fireball_rect = self.rect()
-        for rect in self.game.enemyRects.values():
+        for rect in self.game.enemy_rects.values():
             if fireball_rect.colliderect(rect):
                 kill = [True, rect,'enemy']
         for rect in tilemap.physics_rects_around((self.pos[0] + self.scaleSize[0] / 2, self.pos[1] + self.scaleSize[1] / 2)):
