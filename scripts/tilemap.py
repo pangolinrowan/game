@@ -104,8 +104,3 @@ class Tilemap:
                 if loc in self.tilemap:
                     tile = self.tilemap[loc]
                     surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * 16 - offset[0], tile['pos'][1] * 16 - offset[1]))
-                         
-        #for loc in self.tilemap:
-         #   tile = self.tilemap[loc]
-         #   surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * 16 - offset[0], tile['pos'][1] * 16 - offset[1]))
-            
