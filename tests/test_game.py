@@ -68,7 +68,7 @@ class TestGameIntegration:
                 self.particles = []
                 self.sparks = []
                 self.enemies = []
-                self.enemyRects = {}
+                self.enemy_rects = {}
                 self.dead = 0
                 self.screenshake = 0
                 
@@ -84,12 +84,12 @@ class TestGameIntegration:
         
         # Add enemy to the game
         game_components.enemies.append(enemy)
-        game_components.enemyRects[enemy] = enemy.rect()
+        game_components.enemy_rects[enemy] = enemy.rect()
         game_components.player = player
         
         # Verify the enemy is added correctly
         assert len(game_components.enemies) == 1
-        assert game_components.enemyRects.get(enemy) is not None
+        assert game_components.enemy_rects.get(enemy) is not None
         
         # Check that the player's attack can create projectiles
         player.attack()
