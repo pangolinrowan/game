@@ -139,7 +139,6 @@ class Editor:
     
     def run(self):
         while True:
-            # print(self.tilemap.physics_rects_around(self.player.pos))
             self.display.fill((0, 0, 0))
             
             self.scroll[0] += (self.movement[1] - self.movement[0]) * 2
