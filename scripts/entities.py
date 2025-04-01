@@ -32,11 +32,23 @@ class PhysicsEntity:
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
     
     def update(self, tilemap, movement=(0,0)):
-        self.collisions = {'up' : False, 'down' : False, 'right' : False, 'left' : False}
-        frame_movement = (movement[0] + self.velocity[0], movement[1] + self.velocity[1])
+        self.reset_collisions()
+        frame_movement = self.calculate_frame_movement(movement)
+        self.handle_horizontal_movement(tilemap, frame_movement)
+        self.handle_vertical_movement(tilemap, frame_movement)
+        self.update_flip_state(movement)
+        self.apply_gravity()
+        self.animation.update()
+
+    def reset_collisions(self):
+        self.collisions = {'up': False, 'down': False, 'right': False, 'left': False}
+
+    def calculate_frame_movement(self, movement):
+        return movement[0] + self.velocity[0], movement[1] + self.velocity[1]
+
+    def handle_horizontal_movement(self, tilemap, frame_movement):
         self.pos[0] += frame_movement[0]
         entity_rect = self.rect()
-
         for rect in tilemap.physics_rects_around(self.pos):
             if entity_rect.colliderect(rect):
                 if frame_movement[0] > 0:
@@ -46,10 +58,10 @@ class PhysicsEntity:
                     entity_rect.left = rect.right
                     self.collisions['left'] = True
                 self.pos[0] = entity_rect.x
-        
+
+    def handle_vertical_movement(self, tilemap, frame_movement):
         self.pos[1] += frame_movement[1]
         entity_rect = self.rect()
-        
         for rect in tilemap.physics_rects_around(self.pos):
             if entity_rect.colliderect(rect):
                 if frame_movement[1] > 0:
@@ -60,20 +72,19 @@ class PhysicsEntity:
                     self.collisions['up'] = True
                 self.pos[1] = entity_rect.y
 
+    def update_flip_state(self, movement):
         if movement[0] > 0:
             self.flip = False
-        if movement[0] < 0:
+        elif movement[0] < 0:
             self.flip = True
-        
+
+    def apply_gravity(self):
         self.velocity[1] = min(5, self.velocity[1] + 0.1)
-        
         if self.collisions['down'] or self.collisions['up']:
             self.velocity[1] = 0
             
-        self.animation.update()
     def render(self, surf, offset=(0,0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1]))
-        #surf.blit(self.game.assets['player'], (self.pos[0] - offset[0], self.pos[1] - offset[1]))
 
 
 
@@ -86,38 +97,48 @@ class Enemy(PhysicsEntity):
     def update(self, tilemap, movement=(0,0)):
         enemy_rect = self.rect()
         if self.walking:
-            if tilemap.solid_check((enemy_rect.centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
-                if (self.collisions['right'] or self.collisions['left']):
-                    self.flip = not self.flip
-                else:
-                    movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
-            else:
-                self.flip =  not self.flip 
-            self.walking = max(0, self.walking - 1)
-            if not self.walking:
-                dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
-                if (abs(dis[1] < 16)):
-                    if (self.flip and dis[0] < 0):
-                        self.game.sfx['shoot'].play()
-                        self.game.projectiles.append([[enemy_rect.centerx - 7, enemy_rect.centery], -1.5, 0, self.flip])
-                        for i in range(4):
-                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random(),(255,255,255)))
-                    if (not self.flip and dis[0] > 0):
-                        self.game.sfx['shoot'].play()
-                        self.game.projectiles.append([[enemy_rect.centerx + 7, enemy_rect.centery], 1.5, 0, self.flip])
-                        for i in range(4):
-                            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 + random.random(),(255,255,255)))
+            movement = self.handle_walking(tilemap, enemy_rect, movement)
         elif random.random() < 0.01:
             self.walking = random.randint(30, 120)
-        super().update(tilemap, movement=movement)
+        super().update(tilemap, movement)
+        self.update_action(movement)
+
+    def handle_walking(self, tilemap, enemy_rect, movement):
+        if tilemap.solid_check((enemy_rect.centerx + (-7 if self.flip else 7), self.pos[1] + 23)):
+            movement = self.handle_collision(movement)
+        else:
+            self.flip = not self.flip
+        self.walking = max(0, self.walking - 1)
+        if not self.walking:
+            self.handle_shooting(enemy_rect)
+        return movement
+
+    def handle_collision(self, movement):
+        if self.collisions['right'] or self.collisions['left']:
+            self.flip = not self.flip
+        else:
+            movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
+        return movement
+
+    def handle_shooting(self, enemy_rect):
+        dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
+        if abs(dis[1]) < 16:
+            if self.flip and dis[0] < 0:
+                self.shoot_projectile(enemy_rect, -1.5)
+            elif not self.flip and dis[0] > 0:
+                self.shoot_projectile(enemy_rect, 1.5)
+
+    def shoot_projectile(self, enemy_rect, velocity_x):
+        self.game.sfx['shoot'].play()
+        self.game.projectiles.append([[enemy_rect.centerx + (7 if velocity_x > 0 else -7), enemy_rect.centery], velocity_x, 0, self.flip])
+        for _ in range(4):
+            self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + (math.pi if velocity_x < 0 else 0), 2 + random.random(), (255, 255, 255)))
+
+    def update_action(self, movement):
         if movement[0] != 0:
             self.set_action('run')
         else:
             self.set_action('idle')
-        #for rect in self.game.player_projectiles:
-            #if enemy_rect.colliderect(rect):
-                #print("enemy projectile collision!")
-                #return True
             
     def render(self, surf, offset=(0,0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1] + 1))

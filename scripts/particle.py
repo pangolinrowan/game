@@ -3,6 +3,7 @@
 # ProgLang
 # 10/4/24
 import pygame
+
 class Particle:
     def __init__(self, game, p_type, pos, velocity=[0,0], frame=0):
         self.game = game
@@ -34,7 +35,7 @@ class Projectile(Particle):
         self.scaleFactor = 8
         self.scaleSize = (32,16)
     def rect(self):
-            return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
+        return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
     def update(self, tilemap):
         kill = [False,None,'']
         self.pos[0] += self.velocity[0]
