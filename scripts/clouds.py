@@ -21,15 +21,15 @@ class Cloud:
 
 class Clouds:
     def __init__ (self, cloud_images, count=16):
-        self.clouds = []
+        self.clouds_list = []
         for _ in range(count):
-            self.clouds.append(Cloud((random.random() * 99999, random.random() * 99999), random.choice(cloud_images), random.random() * 0.05 + 0.05, random.random() * 0.6 + 0.2) )
-        self.clouds.sort(key=lambda x: x.depth)
+            self.clouds_list.append(Cloud((random.random() * 99999, random.random() * 99999), random.choice(cloud_images), random.random() * 0.05 + 0.05, random.random() * 0.6 + 0.2) )
+        self.clouds_list.sort(key=lambda x: x.depth)
 
     def update(self):
-            for cloud in self.clouds:
+            for cloud in self.clouds_list:
                 cloud.update()
 
     def render(self, surf, offset=(0,0)):
-            for cloud in self.clouds:
+            for cloud in self.clouds_list:
                 cloud.render(surf, offset=offset)

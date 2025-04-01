@@ -75,6 +75,8 @@ class TestAction:
             if self.game_instance and self.game_instance.dead > 0:
                 break
 
+        assert self.game_instance and self.game_instance.dead > 0
+
         self.quitgame = True
 
         # Wait for the thread to finish

@@ -36,7 +36,7 @@ class TestTilemap:
         tilemap = Tilemap(self.game_mock)
         assert tilemap.game == self.game_mock
         assert tilemap.tile_size == 16
-        assert tilemap.tilemap == {}
+        assert tilemap.tilemap_dict == {}
         assert tilemap.offgrid_tiles == []
         
         # Test custom tile size
@@ -48,8 +48,8 @@ class TestTilemap:
         tilemap = Tilemap(self.game_mock)
         
         # Add some grid tiles
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
-        tilemap.tilemap['1;0'] = {'type': 'stone', 'variant': 1, 'pos': [1, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'stone', 'variant': 1, 'pos': [1, 0]}
         
         # Add some offgrid tiles
         tilemap.offgrid_tiles.append({'type': 'decor', 'variant': 0, 'pos': [25, 25]})
@@ -64,13 +64,13 @@ class TestTilemap:
         assert any(tile['type'] == 'decor' and tile['variant'] == 0 for tile in extracted)
         
         # Verify tiles were removed
-        assert '0;0' not in tilemap.tilemap
+        assert '0;0' not in tilemap.tilemap_dict
         assert len(tilemap.offgrid_tiles) == 1
         assert tilemap.offgrid_tiles[0]['type'] == 'grass' and tilemap.offgrid_tiles[0]['variant'] == 2
         
         # Test extraction with keeping
         tilemap = Tilemap(self.game_mock)
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
         tilemap.offgrid_tiles.append({'type': 'decor', 'variant': 0, 'pos': [25, 25]})
         
         extracted = tilemap.extract([('grass', 0)], keep=True)
@@ -78,7 +78,7 @@ class TestTilemap:
         # Verify correct extraction while keeping originals
         assert len(extracted) == 1
         assert extracted[0]['type'] == 'grass'
-        assert '0;0' in tilemap.tilemap  # Should still be in the tilemap
+        assert '0;0' in tilemap.tilemap_dict  # Should still be in the tilemap
     
     # Verify tiles_around correctly identifies neighboring tiles
     def test_tiles_around(self):
@@ -87,7 +87,7 @@ class TestTilemap:
         # Create a 3x3 grid of tiles
         for x in range(3):
             for y in range(3):
-                tilemap.tilemap[f'{x};{y}'] = {'type': 'grass', 'variant': 0, 'pos': [x, y]}
+                tilemap.tilemap_dict[f'{x};{y}'] = {'type': 'grass', 'variant': 0, 'pos': [x, y]}
         
         # Test center position
         center_pos = (16 + 8, 16 + 8)  # Position in the middle of tile 1,1
@@ -108,8 +108,8 @@ class TestTilemap:
         tilemap = Tilemap(self.game_mock)
         
         # Add some test data
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
-        tilemap.tilemap['1;0'] = {'type': 'stone', 'variant': 1, 'pos': [1, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'stone', 'variant': 1, 'pos': [1, 0]}
         tilemap.offgrid_tiles.append({'type': 'decor', 'variant': 0, 'pos': [25, 25]})
         
         # Create a temporary file for testing
@@ -133,9 +133,9 @@ class TestTilemap:
             new_tilemap.load(temp_path)
             
             # Verify correct loading
-            assert len(new_tilemap.tilemap) == 2
-            assert '0;0' in new_tilemap.tilemap
-            assert '1;0' in new_tilemap.tilemap
+            assert len(new_tilemap.tilemap_dict) == 2
+            assert '0;0' in new_tilemap.tilemap_dict
+            assert '1;0' in new_tilemap.tilemap_dict
             assert len(new_tilemap.offgrid_tiles) == 1
         finally:
             # Clean up
@@ -147,8 +147,8 @@ class TestTilemap:
         tilemap = Tilemap(self.game_mock)
         
         # Add a physics tile and a non-physics tile
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
-        tilemap.tilemap['1;0'] = {'type': 'decor', 'variant': 0, 'pos': [1, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'decor', 'variant': 0, 'pos': [1, 0]}
         
         # Check position inside the physics tile
         result = tilemap.solid_check((8, 8))
@@ -168,8 +168,8 @@ class TestTilemap:
         tilemap = Tilemap(self.game_mock)
         
         # Add a physics tile and a non-physics tile
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
-        tilemap.tilemap['1;0'] = {'type': 'decor', 'variant': 0, 'pos': [1, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'decor', 'variant': 0, 'pos': [1, 0]}
         
         # Check rects around physics tile
         rects = tilemap.physics_rects_around((8, 8))
@@ -191,37 +191,37 @@ class TestTilemap:
         # Create a specific pattern for autotiling
         # A single grass tile with grass tile to the right and below
         # This should match the pattern for variant 0 in AUTOTILE_MAP
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
-        tilemap.tilemap['1;0'] = {'type': 'grass', 'variant': 0, 'pos': [1, 0]}
-        tilemap.tilemap['0;1'] = {'type': 'grass', 'variant': 0, 'pos': [0, 1]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'grass', 'variant': 0, 'pos': [1, 0]}
+        tilemap.tilemap_dict['0;1'] = {'type': 'grass', 'variant': 0, 'pos': [0, 1]}
         
         # Run autotile
         tilemap.autotile()
         
         # The tile at 0,0 should have neighbors at (1,0) and (0,1)
         # This corresponds to the pattern tuple(sorted([(1, 0), (0, 1)])) which should map to variant 0
-        assert tilemap.tilemap['0;0']['variant'] == 0
+        assert tilemap.tilemap_dict['0;0']['variant'] == 0
         
         # Create a different test case - a tile with neighbors on all sides
         tilemap = Tilemap(self.game_mock)
-        tilemap.tilemap['1;1'] = {'type': 'grass', 'variant': 0, 'pos': [1, 1]}
-        tilemap.tilemap['0;1'] = {'type': 'grass', 'variant': 0, 'pos': [0, 1]}
-        tilemap.tilemap['2;1'] = {'type': 'grass', 'variant': 0, 'pos': [2, 1]}
-        tilemap.tilemap['1;0'] = {'type': 'grass', 'variant': 0, 'pos': [1, 0]}
-        tilemap.tilemap['1;2'] = {'type': 'grass', 'variant': 0, 'pos': [1, 2]}
+        tilemap.tilemap_dict['1;1'] = {'type': 'grass', 'variant': 0, 'pos': [1, 1]}
+        tilemap.tilemap_dict['0;1'] = {'type': 'grass', 'variant': 0, 'pos': [0, 1]}
+        tilemap.tilemap_dict['2;1'] = {'type': 'grass', 'variant': 0, 'pos': [2, 1]}
+        tilemap.tilemap_dict['1;0'] = {'type': 'grass', 'variant': 0, 'pos': [1, 0]}
+        tilemap.tilemap_dict['1;2'] = {'type': 'grass', 'variant': 0, 'pos': [1, 2]}
         
         tilemap.autotile()
         
         # The center tile should have neighbors in all four directions
         # This corresponds to tuple(sorted([(1, 0), (-1,0), (0, 1), (0, -1)])) which maps to variant 8
-        assert tilemap.tilemap['1;1']['variant'] == 8
+        assert tilemap.tilemap_dict['1;1']['variant'] == 8
     
     # Verify render method calls the expected surface blits
     def test_render(self):
         tilemap = Tilemap(self.game_mock)
         
         # Add grid and offgrid tiles
-        tilemap.tilemap['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
+        tilemap.tilemap_dict['0;0'] = {'type': 'grass', 'variant': 0, 'pos': [0, 0]}
         tilemap.offgrid_tiles.append({'type': 'decor', 'variant': 0, 'pos': [25, 25]})
         
         # Create a tracking surface class instead of monkeypatching

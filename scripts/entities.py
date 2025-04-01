@@ -22,7 +22,7 @@ class PhysicsEntity:
         self.anim_offset = (-3, -3)
         self.attack_offset = (-8 , -19)
         self.attacking = False
-        self.attackingFrames = 0
+        self.attacking_frames = 0
     def set_action(self, action):
         if action != self.action:
             self.action = action
@@ -162,7 +162,7 @@ class Player(PhysicsEntity):
         if self.air_time >= 120:
             self.game.screenshake = max(16, self.game.screenshake)
             self.game.dead += 1
-        if self.attackingFrames >= 36:
+        if self.attacking_frames >= 36:
             self.attacking = False
         if self.collisions['down']:
             if self.action == 'jump':
@@ -171,16 +171,16 @@ class Player(PhysicsEntity):
             self.jumps = 2
         if self.attacking == True:
             self.set_action('attack')
-            self.attackingFrames += 1
+            self.attacking_frames += 1
         elif self.air_time > 4:
             self.set_action('jump')
-            self.attackingFrames = 0
+            self.attacking_frames = 0
         elif movement[0] != 0:
             self.set_action('run')
-            self.attackingFrames = 0
+            self.attacking_frames = 0
         else:
             self.set_action('idle')
-            self.attackingFrames = 0
+            self.attacking_frames = 0
     def jump(self):
         if self.jumps:
             self.velocity[1] = -2.5

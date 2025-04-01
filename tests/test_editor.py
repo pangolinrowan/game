@@ -61,7 +61,7 @@ class TestEditor:
         
         # Check tilemap
         assert editor.tilemap.tile_size == 16
-        assert editor.tilemap.tilemap == {}
+        assert editor.tilemap.tilemap_dict == {}
         assert editor.tilemap.offgrid_tiles == []
     
     def test_editor_movement(self, editor_components):
@@ -149,7 +149,7 @@ class TestEditor:
         # Place tile (if on grid)
         if editor.ongrid and editor.clicking:
             tile_loc = f"{tile_pos[0]};{tile_pos[1]}"
-            editor.tilemap.tilemap[tile_loc] = {
+            editor.tilemap.tilemap_dict[tile_loc] = {
                 'type': editor.tile_list[editor.tile_group],
                 'variant': editor.tile_variant,
                 'pos': tile_pos
@@ -157,9 +157,9 @@ class TestEditor:
         
         # Verify tile was placed
         tile_loc = f"{tile_pos[0]};{tile_pos[1]}"
-        assert tile_loc in editor.tilemap.tilemap
-        assert editor.tilemap.tilemap[tile_loc]['type'] == editor.tile_list[editor.tile_group]
-        assert editor.tilemap.tilemap[tile_loc]['variant'] == editor.tile_variant
+        assert tile_loc in editor.tilemap.tilemap_dict
+        assert editor.tilemap.tilemap_dict[tile_loc]['type'] == editor.tile_list[editor.tile_group]
+        assert editor.tilemap.tilemap_dict[tile_loc]['variant'] == editor.tile_variant
         
         # Test placing offgrid tiles
         editor.ongrid = False
@@ -184,7 +184,7 @@ class TestEditor:
         # Add a tile to remove
         tile_pos = (6, 6)
         tile_loc = f"{tile_pos[0]};{tile_pos[1]}"
-        editor.tilemap.tilemap[tile_loc] = {
+        editor.tilemap.tilemap_dict[tile_loc] = {
             'type': 'grass',
             'variant': 0,
             'pos': tile_pos
@@ -203,11 +203,11 @@ class TestEditor:
         # Remove tile
         if editor.right_clicking:
             tile_loc = f"{calculated_tile_pos[0]};{calculated_tile_pos[1]}"
-            if tile_loc in editor.tilemap.tilemap:
-                del editor.tilemap.tilemap[tile_loc]
+            if tile_loc in editor.tilemap.tilemap_dict:
+                del editor.tilemap.tilemap_dict[tile_loc]
         
         # Verify tile was removed
-        assert tile_loc not in editor.tilemap.tilemap
+        assert tile_loc not in editor.tilemap.tilemap_dict
         
         # Test removing offgrid tiles
         # Add an offgrid tile
@@ -274,16 +274,16 @@ class TestEditor:
         
         # Set up a pattern of tiles for autotiling
         # Center tile with neighbors to right and below
-        editor.tilemap.tilemap['1;1'] = {'type': 'grass', 'variant': 0, 'pos': (1, 1)}
-        editor.tilemap.tilemap['2;1'] = {'type': 'grass', 'variant': 0, 'pos': (2, 1)}
-        editor.tilemap.tilemap['1;2'] = {'type': 'grass', 'variant': 0, 'pos': (1, 2)}
+        editor.tilemap.tilemap_dict['1;1'] = {'type': 'grass', 'variant': 0, 'pos': (1, 1)}
+        editor.tilemap.tilemap_dict['2;1'] = {'type': 'grass', 'variant': 0, 'pos': (2, 1)}
+        editor.tilemap.tilemap_dict['1;2'] = {'type': 'grass', 'variant': 0, 'pos': (1, 2)}
         
         # Create a simplified autotile method for testing
         def mock_autotile():
             # Just set all variants to 1 for testing
-            for tile_loc in editor.tilemap.tilemap:
-                if editor.tilemap.tilemap[tile_loc]['type'] == 'grass':
-                    editor.tilemap.tilemap[tile_loc]['variant'] = 1
+            for tile_loc in editor.tilemap.tilemap_dict:
+                if editor.tilemap.tilemap_dict[tile_loc]['type'] == 'grass':
+                    editor.tilemap.tilemap_dict[tile_loc]['variant'] = 1
         
         # Override the autotile method
         editor.tilemap.autotile = mock_autotile
@@ -292,15 +292,15 @@ class TestEditor:
         editor.tilemap.autotile()
         
         # Verify variants were updated
-        for tile_loc in editor.tilemap.tilemap:
-            assert editor.tilemap.tilemap[tile_loc]['variant'] == 1
+        for tile_loc in editor.tilemap.tilemap_dict:
+            assert editor.tilemap.tilemap_dict[tile_loc]['variant'] == 1
     
     def test_save_load(self, editor_components, tmp_path):
         """Test saving and loading tilemap"""
         editor = editor_components
         
         # Add some tiles
-        editor.tilemap.tilemap['1;1'] = {'type': 'grass', 'variant': 0, 'pos': (1, 1)}
+        editor.tilemap.tilemap_dict['1;1'] = {'type': 'grass', 'variant': 0, 'pos': (1, 1)}
         editor.tilemap.offgrid_tiles.append({'type': 'decor', 'variant': 0, 'pos': (50, 50)})
         
         # Create a test file path
@@ -328,7 +328,7 @@ class TestEditor:
         
         # Test load logic
         # First, clear the tilemap
-        editor.tilemap.tilemap = {}
+        editor.tilemap.tilemap_dict = {}
         editor.tilemap.offgrid_tiles = []
         
         # Mock the load method
@@ -337,7 +337,7 @@ class TestEditor:
         def mock_load(path):
             load_called[0] = True
             # Set some test data instead of actually loading
-            editor.tilemap.tilemap = {'2;2': {'type': 'stone', 'variant': 1, 'pos': (2, 2)}}
+            editor.tilemap.tilemap_dict = {'2;2': {'type': 'stone', 'variant': 1, 'pos': (2, 2)}}
             editor.tilemap.offgrid_tiles = [{'type': 'large_decor', 'variant': 0, 'pos': (100, 100)}]
             return True
         
@@ -348,5 +348,5 @@ class TestEditor:
         
         # Verify load was called and data was updated
         assert load_called[0] == True
-        assert '2;2' in editor.tilemap.tilemap
+        assert '2;2' in editor.tilemap.tilemap_dict
         assert len(editor.tilemap.offgrid_tiles) == 1

@@ -164,7 +164,7 @@ class TestGameIntegration:
         player = Player(game_components, (50, 50), (10, 13))
         
         # Mock some tiles for collision testing
-        tilemap.tilemap = {
+        tilemap.tilemap_dict = {
             '3;3': {'type': 'grass', 'variant': 0, 'pos': [3, 3]},
             '4;3': {'type': 'grass', 'variant': 0, 'pos': [4, 3]}
         }
