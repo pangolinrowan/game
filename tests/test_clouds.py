@@ -1,3 +1,4 @@
+import math
 import pytest
 import pygame
 import random
@@ -33,8 +34,8 @@ class TestCloud:
         # Verify properties
         assert cloud.pos == list(pos)
         assert cloud.img == self.cloud_img
-        assert cloud.speed == speed
-        assert cloud.depth == depth
+        assert math.isclose(cloud.speed, speed, rel_tol=1e-9)
+        assert math.isclose(cloud.depth, depth, rel_tol=1e-9)
     
     # Verify Cloud update moves the cloud based on speed
     def test_cloud_update(self):
@@ -49,7 +50,7 @@ class TestCloud:
         cloud.update()
         
         # Position should change by speed amount
-        assert cloud.pos[0] == initial_x + speed
+        assert math.isclose(cloud.pos[0], initial_x + speed, rel_tol=1e-9)
         assert cloud.pos[1] == pos[1]  # Y position stays the same
     
     # Verify Cloud render correctly calculates position and wraps around screen
