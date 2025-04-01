@@ -137,7 +137,7 @@ class Game:
     
     def handle_player_projectiles(self):
         for projectile in self.player_projectiles.copy():
-            kill = projectile.update(self.tilemap)
+            kill = projectile.update()
             projectile.render(self.display, offset=self.render_scroll)
             if kill[0]:
                 for _ in range(30):
@@ -195,7 +195,7 @@ class Game:
             direction = -1.5 if self.player.flip else 1.5
             offset_x = -16 if self.player.flip else 0
             self.player_projectiles.append(
-                Projectile(self, 'fireball', [self.player.pos[0] + offset_x, self.player.pos[1] - 3], [direction, 0])
+                Projectile(self, self.tilemap, 'fireball', [self.player.pos[0] + offset_x, self.player.pos[1] - 3], [direction, 0])
             )
 
     def handle_keyboard_event(self, event):
