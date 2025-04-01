@@ -93,7 +93,7 @@ class TestPhysicsEntity:
         assert entity.flip == False
         assert entity.action == 'idle'  # Default action set in init
         assert entity.attacking == False
-        assert entity.attackingFrames == 0
+        assert entity.attacking_frames == 0
     
     # Verify set_action changes animation correctly
     def test_physics_entity_set_action(self):
@@ -318,10 +318,10 @@ class TestPlayer(TestPhysicsEntity):
         assert player.action == 'attack'
         
         # Attack frames should increment
-        assert player.attackingFrames > 0
+        assert player.attacking_frames > 0
         
         # Attack should end after enough frames
-        player.attackingFrames = 36
+        player.attacking_frames = 36
         player.update(self.tilemap_mock)
         assert player.attacking == False
     
