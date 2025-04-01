@@ -34,9 +34,6 @@ class Projectile(Particle):
         self.scaleFactor = 8
         self.scaleSize = (32,16)
     def rect(self):
-        if self.velocity[0] > 0:
-            return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
-        else:
             return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
     def update(self, tilemap):
         kill = [False,None,'']
@@ -57,7 +54,4 @@ class Projectile(Particle):
     def render(self, surf, offset=(0,0)):
         img  = self.animation.img()
         img = pygame.transform.scale(img, (32,16))
-        #print(img.get_width())
-        #pygame.draw.rect(surf, (255,0,0), self.rect())
-        #surf.blit(rect, (self.pos[0] - offset[0], self.pos[1] - offset[1]))
         surf.blit(pygame.transform.flip(img, (True if self.velocity[0] < 0 else False), False), (self.pos[0] - offset[0], self.pos[1] - offset[1]))
