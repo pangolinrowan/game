@@ -36,7 +36,7 @@ class Projectile(Particle):
         self.scaleSize = (32,16)
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
-    def update(self, tilemap):
+    def update(self, tilemap=None):
         kill = [False,None,'']
         self.pos[0] += self.velocity[0]
         self.pos[1] += self.velocity[1]
