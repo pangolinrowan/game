@@ -29,14 +29,15 @@ class Particle:
         img  = self.animation.img()
         surf.blit(img, (self.pos[0] - offset[0] - img.get_width() // 2, self.pos[1] - offset[1] - img.get_height() // 2))
 class Projectile(Particle):
-    def __init__(self, game, p_type, pos, velocity=[0,0], frame=0):
+    def __init__(self, game, tilemap, p_type, pos, velocity=[0,0], frame=0):
         super().__init__(game, 'fireball', pos, velocity)
         self.projectileFTD = 175
         self.scaleFactor = 8
         self.scaleSize = (32,16)
+        self.tilemap = tilemap
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.scaleSize[0], self.scaleSize[1])
-    def update(self, tilemap=None):
+    def update(self):
         kill = [False,None,'']
         self.pos[0] += self.velocity[0]
         self.pos[1] += self.velocity[1]
@@ -44,7 +45,7 @@ class Projectile(Particle):
         for rect in self.game.enemy_rects.values():
             if fireball_rect.colliderect(rect):
                 kill = [True, rect,'enemy']
-        for rect in tilemap.physics_rects_around((self.pos[0] + self.scaleSize[0] / 2, self.pos[1] + self.scaleSize[1] / 2)):
+        for rect in self.tilemap.physics_rects_around((self.pos[0] + self.scaleSize[0] / 2, self.pos[1] + self.scaleSize[1] / 2)):
             if fireball_rect.colliderect(rect):
                 kill = [True, rect,'tile']
         if self.projectileFTD == 0 and not kill[0]:
