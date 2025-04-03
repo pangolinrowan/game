@@ -13,9 +13,6 @@ def test_imports():
     from scripts.clouds import Clouds
     from scripts.particle import Particle, Projectile
     from scripts.spark import Spark
-    
-    # If we get to this point without exceptions, the imports are working
-    assert True
 
 # Mock pygame to prevent actual initialization
 @pytest.fixture(autouse=True)
@@ -167,7 +164,7 @@ class TestGameIntegration:
         player = Player(game_components, (50, 50), (10, 13))
         
         # Mock some tiles for collision testing
-        tilemap.tilemap = {
+        tilemap.tilemap_dict = {
             '3;3': {'type': 'grass', 'variant': 0, 'pos': [3, 3]},
             '4;3': {'type': 'grass', 'variant': 0, 'pos': [4, 3]}
         }

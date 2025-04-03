@@ -3,6 +3,7 @@
 # ProgLang
 # 10/4/24
 import pygame
+
 class Particle:
     def __init__(self, game, p_type, pos, velocity=[0,0], frame=0):
         self.game = game

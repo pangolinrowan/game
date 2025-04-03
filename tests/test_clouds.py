@@ -1,3 +1,4 @@
+import math
 import pytest
 import pygame
 import random
@@ -33,8 +34,8 @@ class TestCloud:
         # Verify properties
         assert cloud.pos == list(pos)
         assert cloud.img == self.cloud_img
-        assert cloud.speed == speed
-        assert cloud.depth == depth
+        assert math.isclose(cloud.speed, speed, rel_tol=1e-9)
+        assert math.isclose(cloud.depth, depth, rel_tol=1e-9)
     
     # Verify Cloud update moves the cloud based on speed
     def test_cloud_update(self):
@@ -49,7 +50,7 @@ class TestCloud:
         cloud.update()
         
         # Position should change by speed amount
-        assert cloud.pos[0] == initial_x + speed
+        assert math.isclose(cloud.pos[0], initial_x + speed, rel_tol=1e-9)
         assert cloud.pos[1] == pos[1]  # Y position stays the same
     
     # Verify Cloud render correctly calculates position and wraps around screen
@@ -88,9 +89,7 @@ class TestCloud:
         
         # Verify blit was called with position adjusted by depth
         assert tracker.blit_count == 1
-        # The render position should account for the offset * depth
-        expected_x = cloud.pos[0] - 10 * 0.3
-        expected_y = cloud.pos[1] - 5 * 0.3
+        
         # Need to account for wrapping in comparison
         # Just verify a blit happened, wrapping logic is complex to test precisely
         assert tracker.last_blit_pos is not None
@@ -130,18 +129,18 @@ class TestClouds:
         clouds = Clouds(self.cloud_images, count=cloud_count)
         
         # Verify correct number of clouds
-        assert len(clouds.clouds) == cloud_count
+        assert len(clouds.clouds_list) == cloud_count
         
         # Verify all items are Cloud instances
-        assert all(isinstance(cloud, Cloud) for cloud in clouds.clouds)
+        assert all(isinstance(cloud, Cloud) for cloud in clouds.clouds_list)
         
         # Verify clouds are sorted by depth
-        depths = [cloud.depth for cloud in clouds.clouds]
+        depths = [cloud.depth for cloud in clouds.clouds_list]
         assert depths == sorted(depths)
         
         # Test with default count
         clouds = Clouds(self.cloud_images)
-        assert len(clouds.clouds) == 16  # Default count
+        assert len(clouds.clouds_list) == 16  # Default count
     
     # Verify Clouds update calls update on all Cloud instances
     def test_clouds_update(self):
@@ -149,13 +148,13 @@ class TestClouds:
         clouds = Clouds(self.cloud_images, count=3)
         
         # Save initial positions
-        initial_positions = [cloud.pos[0] for cloud in clouds.clouds]
+        initial_positions = [cloud.pos[0] for cloud in clouds.clouds_list]
         
         # Update clouds
         clouds.update()
         
         # Verify all clouds have moved
-        for i, cloud in enumerate(clouds.clouds):
+        for i, cloud in enumerate(clouds.clouds_list):
             assert cloud.pos[0] != initial_positions[i]
     
     # Verify Clouds render calls render on all Cloud instances
