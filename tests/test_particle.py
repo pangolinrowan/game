@@ -163,7 +163,7 @@ class TestProjectile:
     
     # Verify Projectile initialization with correct properties
     def test_projectile_initialization(self):
-        projectile = Projectile(self.game_mock, 'fireball', (100, 100), velocity=[2, 0])
+        projectile = Projectile(self.game_mock, self.tilemap_mock, 'fireball', (100, 100), velocity=[2, 0])
         
         # Verify base particle properties
         assert projectile.game == self.game_mock
@@ -179,7 +179,7 @@ class TestProjectile:
     # Verify Projectile rect method returns correct rectangle
     def test_projectile_rect(self):
         # Test with positive velocity (moving right)
-        projectile = Projectile(self.game_mock, 'fireball', (100, 100), velocity=[2, 0])
+        projectile = Projectile(self.game_mock, self.tilemap_mock, 'fireball', (100, 100), velocity=[2, 0])
         
         rect = projectile.rect()
         assert isinstance(rect, pygame.Rect)
@@ -189,7 +189,7 @@ class TestProjectile:
         assert rect.height == 16
         
         # Test with negative velocity (moving left)
-        projectile = Projectile(self.game_mock, 'fireball', (100, 100), velocity=[-2, 0])
+        projectile = Projectile(self.game_mock, self.tilemap_mock, 'fireball', (100, 100), velocity=[-2, 0])
         
         rect = projectile.rect()
         assert isinstance(rect, pygame.Rect)
@@ -200,10 +200,10 @@ class TestProjectile:
     
     # Verify Projectile update method handles movement, collisions, and lifespan
     def test_projectile_update(self):
-        projectile = Projectile(self.game_mock, 'fireball', (100, 100), velocity=[2, 1])
+        projectile = Projectile(self.game_mock, self.tilemap_mock, 'fireball', (100, 100), velocity=[2, 1])
         
         # Normal update with no collisions
-        kill = projectile.update(self.tilemap_mock)
+        kill = projectile.update()
         
         assert projectile.pos == [102, 101]  # Position updated by velocity
         assert not kill[0]  # Shouldn't be killed
@@ -216,7 +216,7 @@ class TestProjectile:
         # Move projectile to collision position
         projectile.pos = [110, 100]
         
-        kill = projectile.update(self.tilemap_mock)
+        kill = projectile.update()
         
         assert kill[0]  # Should be killed on enemy collision
         assert kill[1] == enemy_rect  # Should return collided object
@@ -230,7 +230,7 @@ class TestProjectile:
         # Move projectile to collision position
         projectile.pos = [110, 100]
         
-        kill = projectile.update(self.tilemap_mock)
+        kill = projectile.update()
         
         assert kill[0]  # Should be killed on tile collision
         assert kill[1] == tile_rect  # Should return collided object
@@ -240,7 +240,7 @@ class TestProjectile:
         self.tilemap_mock.collision_rects = []  # Clear collision rects
         projectile.projectileFTD = 0
         
-        kill = projectile.update(self.tilemap_mock)
+        kill = projectile.update()
         
         assert kill[0]  # Should be killed when timer expires
         assert kill[1] is None  # No collision object
@@ -249,7 +249,7 @@ class TestProjectile:
     # Verify Projectile render method correctly positions, flips, and blits the image
     def test_projectile_render(self):
         # Test with positive velocity (moving right)
-        projectile = Projectile(self.game_mock, 'fireball', (100, 100), velocity=[2, 0])
+        projectile = Projectile(self.game_mock, self.tilemap_mock, 'fireball', (100, 100), velocity=[2, 0])
         
         # Create a tracking surface class
         class BlitTracker:
